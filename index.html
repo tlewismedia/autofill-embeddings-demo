@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Embedding Demo</title>
+  </head>
+
+  <body>
+    <h1>Word to Embedding Demo</h1>
+
+    <input id="inputTextThesaurus" type="text" placeholder="Enter a word..." />
+    <input
+      type="range"
+      id="threshold"
+      name="myRange"
+      min="0"
+      max="1"
+      step="0.01"
+    />
+    <p>Threshold: <span id="threshold_output"></span></p>
+
+    <button id="btnThesaurus">Add to Thesaurus</button>
+
+    <hr />
+
+    <pre id="output"></pre>
+
+    <script>
+      const btnThes = document.getElementById("btnThesaurus");
+      const inputThesaurus = document.getElementById("inputTextThesaurus");
+      const inputThreshold = document.getElementById("threshold");
+      const output = document.getElementById("output");
+
+      const threshOutput = document.getElementById("threshold_output");
+      threshOutput.innerHTML = inputThreshold.value;
+      inputThreshold.oninput = function () {
+        threshOutput.innerHTML = this.value;
+      };
+
+      function commaSeparatedStringToArray(str) {
+        return str
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      btnThes.addEventListener("click", async () => {
+        const labels = commaSeparatedStringToArray(inputThesaurus.value);
+        const threshold = inputThreshold.value;
+        if (!labels) return;
+
+        output.textContent = "Loading...";
+
+        try {
+          const res = await fetch("http://localhost:3000/thesaurus", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ labels, threshold }),
+          });
+
+          const data = await res.json();
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          output.textContent = "Error: " + err.message;
+        }
+      });
+    </script>
+  </body>
+</html>
