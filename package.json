@@ -1,18 +1,20 @@
 {
   "name": "embeddings",
-  "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node --experimental-strip-types --watch --env-file=.env src/server.ts",
+    "start": "node --experimental-strip-types --env-file=.env src/server.ts"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "openai": "^5.16.0"
+    "openai": "^5.16.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   },
   "type": "module"
 }
