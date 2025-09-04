@@ -3,6 +3,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import type { Request, Response } from "express";
+import fs from "fs/promises";
+import { fileURLToPath } from "url";
+import path from "path";
+
 // Load environment variables
 dotenv.config();
 
@@ -17,6 +21,18 @@ interface ThesaurusItem {
   canonical?: string;
 }
 const thesaurus: ThesaurusItem[] = [];
+
+interface VaultItem {
+  value: string;
+  canonical: string;
+}
+
+const vault: VaultItem[] = [
+  { value: "Lewis", canonical: "last_name" },
+  { value: "Tom", canonical: "first_name" },
+];
+
+// { "canonical": "last_name", “value” : “Lewis”}
 
 // Create OpenAI client
 const client = new OpenAI({
@@ -36,7 +52,7 @@ function normalizeString(str: string): string {
     .replace(/_+$/, "");
 }
 
-// Calculate cosine similarity
+// Calculate cosine similarity - returns a value between 0 and 1
 function cosineSimilarity(a: number[], b: number[]): number {
   const dot = a.reduce((sum, ai, i) => sum + ai * b[i], 0);
   const normA = Math.sqrt(a.reduce((sum, ai) => sum + ai * ai, 0));
@@ -60,6 +76,31 @@ function findBestMatchOrUseOriginal(
   }
 
   return thesaurus[bestIndex];
+}
+
+// Function to save the thesaurus data to a JSON file
+async function saveThesaurusToFile() {
+  try {
+    const filePath = path.join(__dirname, "thesaurus.json");
+    await fs.writeFile(filePath, JSON.stringify(thesaurus, null, 2));
+    console.log(`Thesaurus data saved to ${filePath}`);
+  } catch (error) {
+    console.error("Error saving thesaurus to file:", error);
+  }
+}
+
+// Function to load the thesaurus data from a JSON file
+async function loadThesaurusFromFile() {
+  try {
+    const filePath = path.join(__dirname, "thesaurus.json");
+    const data = await fs.readFile(filePath, "utf-8");
+    const thesaurusData: ThesaurusItem[] = JSON.parse(data);
+    thesaurus.length = 0; // clear current thesaurus
+    thesaurus.push(...thesaurusData); // load new thesaurus data
+    console.log(`Thesaurus data loaded from ${filePath}`);
+  } catch (error) {
+    console.error("Error loading thesaurus from file:", error);
+  }
 }
 
 // Process labels
@@ -114,7 +155,26 @@ app.post("/thesaurus", async (req: Request, res: Response) => {
   }
 });
 
+// endpoint to save the thesaurus data
+app.post("/save-thesaurus", async (req: Request, res: Response) => {
+  await saveThesaurusToFile();
+  res.json({ message: "Thesaurus data saved successfully" });
+});
+
+// endpoint to load the thesaurus data
+app.get("/load-thesaurus", async (req: Request, res: Response) => {
+  try {
+    await loadThesaurusFromFile();
+    res.json({ message: "Thesaurus data loaded successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load thesaurus" });
+  }
+});
+
 // Start the server
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

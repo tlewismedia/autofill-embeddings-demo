@@ -20,6 +20,9 @@
     <p>Threshold: <span id="threshold_output"></span></p>
 
     <button id="btnThesaurus">Add to Thesaurus</button>
+    <button id="btnSaveThesaurus">Save Thesaurus to File</button>
+    <!-- New Load Button -->
+    <button id="btnLoadThesaurus">Load Thesaurus from File</button>
 
     <hr />
 
@@ -27,6 +30,8 @@
 
     <script>
       const btnThes = document.getElementById("btnThesaurus");
+      const btnSaveThes = document.getElementById("btnSaveThesaurus");
+      const btnLoadThes = document.getElementById("btnLoadThesaurus"); // New element reference
       const inputThesaurus = document.getElementById("inputTextThesaurus");
       const inputThreshold = document.getElementById("threshold");
       const output = document.getElementById("output");
@@ -46,8 +51,11 @@
 
       btnThes.addEventListener("click", async () => {
         const labels = commaSeparatedStringToArray(inputThesaurus.value);
-        const threshold = inputThreshold.value;
-        if (!labels) return;
+        const threshold = parseFloat(inputThreshold.value);
+        if (!labels || labels.length === 0) {
+          output.textContent = "Please enter some words.";
+          return;
+        }
 
         output.textContent = "Loading...";
 
@@ -56,6 +64,39 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ labels, threshold }),
+          });
+
+          const data = await res.json();
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          output.textContent = "Error: " + err.message;
+        }
+      });
+
+      btnSaveThes.addEventListener("click", async () => {
+        output.textContent = "Saving thesaurus...";
+
+        try {
+          const res = await fetch("http://localhost:3000/save-thesaurus", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          const data = await res.json();
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          output.textContent = "Error: " + err.message;
+        }
+      });
+
+      // New Event Listener for Loading Thesaurus
+      btnLoadThes.addEventListener("click", async () => {
+        output.textContent = "Loading thesaurus...";
+
+        try {
+          const res = await fetch("http://localhost:3000/load-thesaurus", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
           });
 
           const data = await res.json();
